@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css">
+    <title>Document</title>
+</head>
+<body>
+
+    <h2>Welcome to TronWkk App</h2>
+
+    <div>
+        
+            <% if(messages.success_msg){ %>
+
+                <h6> <%= messages.success_msg %> </h6>
+
+             <% } %>
+
+             <% if(messages.error){ %>
+
+                <h6> <%= messages.error %> </h6>
+
+             <% } %>
+        
+    </div>
+
+    <form action="/users/login" method="post">
+        <div> 
+            <label> Email</label>
+            <input type="email" id="email" name="email" placeholder="example@example.com" required/>
+        </div>
+
+        <div> 
+            <label> Password</label>
+            <input type="password" id="pwd" name="password" placeholder="Enter your password" required/>
+        </div>
+
+        <div> 
+            <input type="submit" value="Submit"/>
+        </div>
+
+        <div>
+            <a href="/users/register">Not yet registered? Register here! </a>
+        </div>
+    </form>
+    
+</body>
+</html>

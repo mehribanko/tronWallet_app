@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css">
+    <title>Document</title>
+</head>
+<body>
+
+    <h3>Welcome to TRONwkk Dashboard</h3>
+
+    
+    <div>
+        
+        <% if(messages.success_msg){ %>
+
+            <h6> <%= messages.success_msg %> </h6>
+
+         <% } %>
+
+         <% if(messages.error){ %>
+
+            <h6> <%= messages.error %> </h6>
+
+         <% } %>
+    
+</div>
+
+    <h2 style="font-family:'Lucida Sans', 'Lucida Sans Regular', sans-serif; margin: 40px; color: rgb(2, 105, 164);">Create TRON address </h2>
+<div class="sans-serif w-90 white mw6 center relative cover bg-top mt2"
+style="margin: 20px;">
+    <form class="measure center" action="/createaddr" method="post">
+
+      <label for="password" style="color: rgb(0, 180, 171) ;">Enter your TRONwkk app password</label>
+        <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray"
+        style="margin-bottom: 20px; margin-top: 15px;"
+         type="password" 
+         id="password" 
+         name="password"
+         >
+
+
+        <input 
+        class="ttu bn pv3 ph4 f6  white b br-pill pointer grow"
+        style="margin-top: 18px; background-color: rgb(2, 105, 164); color: antiquewhite;"
+        type="submit" 
+        value="Create TRON Account">
+    </form>
+</div>
+
+
+    <a href="/users/logout">Logout</a>
+    
+</body>
+</html>
