@@ -1,0 +1,69 @@
+body {
+    text-align: center;
+    min-height: 100vh;
+    background-color: #bdd4e7;
+    background-image: linear-gradient(315deg, #bdd4e7 0%, #8693ab 74%);
+  
+  }
+  
+.clipboard {
+    position: relative;
+  }
+
+  .copy-input {
+    max-width: 400px;
+    width: 100%;
+    cursor: pointer;
+    background-color: #8a43d1;
+    border:none;
+    color:#ffffff;
+    font-size: 18px;
+    border-radius: 5px;
+    padding: 25px 45px 25px 25px;
+    font-family: 'Montserrat', sans-serif;
+    box-shadow: 0 3px 15px #bc8ac8;
+    -moz-box-shadow: 0 3px 15px #b8c6db;
+    -webkit-box-shadow: 0 3px 15px #b8c6db;
+  }
+  .copy-input:focus {
+    outline:none;
+  }
+  
+  .copy-btn {
+    width:40px;
+    background-color: #eaeaeb;
+    font-size: 18px;
+    padding: 6px 9px;
+    border-radius: 5px;
+    border:none;
+    color:#6c6c6c;
+    margin-left:-50px;
+    transition: all .4s;
+  }
+  .copy-btn:hover {
+    transform: scale(1.3);
+    color:#1a1a1a;
+    cursor:pointer;
+  }
+  
+  .copy-btn:focus {
+    outline:none;
+  }
+  
+  .copied {
+    font-family: 'Montserrat', sans-serif;
+    width: 75px;
+    display: none;
+    position:fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    margin: auto;
+    color:#000;
+    padding: 15px 15px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 3px 15px #b8c6db;
+    -moz-box-shadow: 0 3px 15px #b8c6db;
+    -webkit-box-shadow: 0 3px 15px #b8c6db;
+  }

@@ -49,10 +49,15 @@ app.get("/users/dashboard", (req,res)=>{
     res.render('dashboard')
 })
 
+app.get("/users/mypage", (req,res)=>{
+    res.render('mypage')
+})
+
 app.get("/users/logout", (req,res, next)=>{
     req.logout(function(err) {
         if (err) { return next(err); }
         req.flash('success_msg', 'You have logged out');
+       
         res.redirect('/');
       });
 })
@@ -194,12 +199,21 @@ app.post("/users/login", passport.authenticate("local", {
 
 
 
-app.post('/createaddr', async (req,res, done)=>{
+app.post('/createaddr', (req,res)=>{
  
    const {password}=req.body;
-   let user_id = req.session.passport.user;
-  
 
+   let user_id = req.session.passport.user;
+   let errors=[];
+   let tronAddressResult;
+
+   if(!password){
+       errors.push({message: "Please, enter your password."});
+   }
+
+   if(errors.length>0){
+       res.render('dashboard', {errors})
+   }else{
    pool.query(
     `select * from users
     where id=$1`, [user_id], 
@@ -209,23 +223,22 @@ app.post('/createaddr', async (req,res, done)=>{
         // success code
         // console.log("results", results.rows)  
         let user;
-        
-        if(results.rows.length>0){
-                user=results.rows[0];
-                // console.log("user from createaddr", user);
-                bcrypt.compare(password, user.password, (err, isMatch)=> {
-                        if(err){
-                            throw err;
-                        }
     
-                        if(isMatch){
-                            return done(null, user);
-                        }else{
-                            return done(null, false, { message: "Password is not correct!"})
-                        }
-                    })
+        if(results.rows.length>0){
+                user=results.rows[0]
+                console.log("which user", user)
+                console.log("users password", user.password)
 
-                // console.log("results after bcrypt", user);
+
+                const isTrue= bcrypt.compareSync(password, user.password);
+                console.log(isTrue);
+    
+                 if(!isTrue){
+                    errors.push({message: "Password is not correct."})
+                    res.render('dashboard', {errors})
+                 }else{
+
+                console.log("results after bcrypt", user);
 
                 pool.query(
                     `select * from addr_data where id=$1`,[user.id],
@@ -236,34 +249,109 @@ app.post('/createaddr', async (req,res, done)=>{
                         // success code
                         if(results.rows.length>0){
                             errors.push({message: "You already have TRON address."})
-                            res.render('dashboard', {errors});
+                            res.render('dashboard', {errors})
                         }else{
                             
                             const fnc= encryptPriKey(user.password);
-                            // console.log('tronaddress', fnc);
+                           
                             const ivHex=fnc.iv.toString('hex');
-                            const queryText = 'insert into addr_data (id, email, password, tronaddr, salt, iv, ciphertext) values ($1, $2, $3, $4, $5, $6, $7) RETURNING tronaddr'
-                            pool.query(queryText, [user.id, user.email, user.password, fnc.tronAddress, fnc.saltHex,ivHex, fnc.cipherText], (err, results)=>{
+                            
+                            const queryText = 'insert into addr_data (id, email, password, tronaddr, salt, iv, ciphertext, hash) values ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING tronaddr'
+                            pool.query(queryText, [user.id, user.email, user.password, fnc.tronAddress, fnc.saltHex, ivHex, fnc.cipherText, fnc.hash], (err, results)=>{
                                 if(err){
                                     throw err;
                                 }
-                                    console.log('tron', results.rows[0].tronaddr);
-                                    return results.rows[0].tronaddr;
+                                    tronAddressResult =results.rows[0].tronaddr;
+                                
+                                    console.log('tron addr 1', tronAddressResult);
+                                    req.flash('success_msg',   `${tronAddressResult}`)
+                                    res.redirect('/users/mypage');
+       
                         })
-                
-                
-                    }
-                    
+                     }
                 })
-               
+            }
         }
-        
-        // // console.log('new tron address', tronAddrResult)     
-        req.flash('success_msg',   `Your new TRON address`)
-        res.redirect('/users/dashboard');
     })
+}
 })
   
+
+
+
+
+
+
+app.post('/exportkey', (req,res)=>{
+ 
+    const {password}=req.body;
+   
+    let user_id = req.session.passport.user;
+    let errors=[];
+    let priKey;
+   
+    if(!password){
+        errors.push({message: "Please, enter your password."});
+    }
+ 
+    if(errors.length>0){
+        res.render('mypage', {errors})
+    }else{
+    pool.query(
+     `select * from addr_data
+     where id=$1`, [user_id], 
+     (err, results)=>{
+         if(err) {throw err;}
+ 
+         // success code
+       
+         let user;
+         if(results.rows.length>0){
+                 user=results.rows[0]
+
+                 const isTrue= bcrypt.compareSync(password, user.password);
+     
+                  if(!isTrue){
+                     errors.push({message: "Password is not correct."})
+                     res.render('mypage', {errors})
+                  }else{
+ 
+                 pool.query(
+                     `select * from addr_data where password=$1`,[user.password],
+                     (err, results)=>{
+                         if(err){
+                             throw err;
+                         }
+                         // success code
+                         if(results.rows.length<0){
+                             errors.push({message: "Please, create TRON address first."})
+                             res.render('mypage', {errors})
+                         }else{ 
+                            let userReal=results.rows[0]
+
+
+                            const fnc=getPrivateKey(userReal.password, userReal.salt, userReal.iv, userReal.ciphertext, userReal.hash);
+
+                            priKey=fnc.decipherTextStr;
+                           
+                            req.flash('success_msg',   `${priKey}`)
+                            res.redirect('/users/mypage');
+        
+                         }
+                        })
+                      }
+                   }
+                 }
+               )
+            }
+         
+        }
+    )
+
+   
+ 
+
+
 
 
 

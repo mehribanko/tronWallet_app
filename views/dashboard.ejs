@@ -11,6 +11,13 @@
 
     <h3>Welcome to TRONwkk Dashboard</h3>
 
+    <div style="color: red;">
+        <% if(typeof errors != 'undefined') { %>
+            <% errors.forEach(error => { %>
+            <h6><%= error.message %></h6>
+            <% }) %>
+        <% } %>
+    </div>
     
     <div>
         

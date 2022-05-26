@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css">
+    <link rel="stylesheet" href="/css/mypage.css"  type="text/css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://kit.fontawesome.com/d97b87339f.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lrsjng.jquery-qrcode/0.13.1/jquery-qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Document</title>
+
+ <style>
+.clipboard {
+    position: relative;
+  }
+
+  h6{
+    color: green;
+    font-size: 16px;
+  }
+
+  .copy-input {
+    max-width: 450px;
+    width: 100%;
+    cursor: pointer;
+    background-color: #5550e3;
+    border:none;
+    color:#ffffff;
+    font-size: 16px;
+    border-radius: 5px;
+    padding: 15px 30px 15px 15px;
+    font-family: 'Montserrat', sans-serif;
+    box-shadow: 0 3px 15px #8967df;
+    -moz-box-shadow: 0 3px 15px #b8c6db;
+    -webkit-box-shadow: 0 3px 15px #b8c6db;
+  }
+  .copy-input:focus {
+    outline:none;
+  }
+
+  .copy-btn .generate-qr-code{
+    display: inline-block;
+}
+
+  .copy-btn {
+    width:40px;
+    background-color: #a6a6f0;
+    font-size: 15px;
+    padding: 2px 4px;
+    border-radius: 5px;
+    border:none;
+    color:#6c6c6c;
+    margin-left:-90px;
+    transition: all .4s;
+  }
+  .copy-btn:hover {
+    transform: scale(1.3);
+    color:#1a1a1a;
+    cursor:pointer;
+  }
+  
+  .copy-btn:focus {
+    outline:none;
+  }
+  
+  .copied {
+    font-family: 'Montserrat', sans-serif;
+    width: 75px;
+    display: none;
+    position:fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    margin: auto;
+    color:#000;
+    padding: 15px 15px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 3px 15px #b8c6db;
+    -moz-box-shadow: 0 3px 15px #b8c6db;
+    -webkit-box-shadow: 0 3px 15px #b8c6db;
+  }
+
+
+
+#qrcode {
+width: 100%;
+height: auto;
+margin: 0 auto;
+color: #000;
+}
+
+#qrcode a {
+font-size: 0.8em;
+}
+
+.qr-url, .qr-size {
+padding: 0.5em;
+border: 1px solid #ddd;
+border-radius: 2px;
+-webkit-box-sizing: border-box;
+-moz-box-sizing: border-box;
+box-sizing: border-box;
+}
+
+
+.qr-size {
+width: 30%;
+}
+
+.generate-qr-code {
+/* margin: 0.5em 0 0;
+padding: 0.25em;
+font-size: 1.2em;
+border: none;
+cursor: pointer;
+color: #fff; */
+width:40px;
+background-color: #a6a6f0;
+font-size: 15px;
+padding: 2px 4px;
+border-radius: 5px;
+border:none;
+color:#6c6c6c;
+margin-left:-50px;
+transition: all .4s;
+margin-left:-2px;
+transition: all .4s;
+}
+
+.generate-qr-code:hover{
+    transform: scale(1.3);
+    color:#1a1a1a;
+    cursor:pointer;
+}
+
+canvas{
+    text-align: left;
+}
+
+
+
+.qr-code-generator {
+width: 360px;
+height: 200px;
+text-align: left;
+}
+
+   </style>
+
+</head>
+<body>
+
+    <h3>My wallet</h3>
+
+    <div style="color: red;">
+        <% if(typeof errors != 'undefined') { %>
+            <% errors.forEach(error => { %>
+            <h6><%= error.message %></h6>
+            <% }) %>
+        <% } %>
+    </div>
+    
+    <div class="clipboard">
+        
+        <% if(messages.success_msg){ %>
+           
+                <h6>New TRON address created!  </h6>
+                <input class="copy-input" id="copyClipboard" value="<%= messages.success_msg %>" readonly/>
+
+                <p type="text" class="qr-url" hidden><%= messages.success_msg %></p>
+                <input type="number" class="qr-size" value="128" min="20" max="500" hidden>
+        
+                <button class="copy-btn" id="copyButton" onclick="copy()" title="Copy to clipboard"><i class="far fa-copy"></i></button>
+                <button class="generate-qr-code" title="Get QR code"><i class="fa fa-qrcode"></i></button>
+                
+                <div class="qr-code-generator"><div id="qrcode"></div></div>
+            
+                <div id="copied-success" class="copied" hidden>
+                  <span>Copied!</span>
+                </div>
+               <span class="txt"> </span>
+                
+                
+                
+                </div>
+
+         <% } %>
+       
+         <% if(messages.error){ %>
+            <h6> <%= messages.error %> </h6>
+         <% } %>
+</div>
+
+
+<div class="sans-serif w-90 white mw6 center relative cover bg-top mt2"
+style="margin: 20px;">
+    <form class="measure center" action="/exportkey" method="post">
+
+      
+        <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray"
+        style="margin-bottom: 20px; margin-top: 15px;"
+         type="password" 
+         id="password" 
+         name="password"
+         placeholder="Enter your password"
+         >
+
+
+        <input 
+        class="ttu bn pv3 ph4 f6  white b br-pill pointer grow"
+        style="margin-top: 18px; background-color: rgb(2, 105, 164); color: antiquewhite;"
+        type="submit" 
+        value="Export Private Key">
+    </form>
+</div>
+
+
+    <a href="/users/logout">Logout</a>
+    
+<script>
+function copy() {
+  var copyText = document.getElementById("copyClipboard");
+  copyText.select();
+  copyText.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+  
+  $('#copied-success').fadeIn(800);
+  $('#copied-success').fadeOut(800);
+}
+
+
+$('.generate-qr-code').on('click', function(){
+
+$('#qrcode').empty();
+
+$('#qrcode').css({
+'width' : $('.qr-size').val(),
+'height' : $('.qr-size').val()
+})
+
+$('#qrcode').qrcode({width: $('.qr-size').val(),height: $('.qr-size').val(),text: $('.qr-url').html()});
+
+});
+
+</script>
+
+</body>
+
+</html>
