@@ -95,14 +95,13 @@ let salt;
 let iv;
 let cipherText;
 let tronAddress;
-let hash;
+let mac;
 
 const encryptPriKey=function(password){
   const algorithm = 'aes-128-ctr';
  
   salt = crypto.randomBytes(16);
   iv= crypto.randomBytes(16);
-
 
   console.log('salt', salt.toString('hex'));
   console.log('iv', iv.toString('hex'));
@@ -123,7 +122,7 @@ const encryptPriKey=function(password){
 
   const derivedKeyBytes= crypto.pbkdf2Sync(password, salt, 1, 128/8, 'sha256')
 
-  console.log('derived key', derivedKeyBytes.toString('hex'));
+  console.log('symmetric key', derivedKeyBytes.toString('hex'));
    
   const cipher = crypto.createCipheriv(algorithm, derivedKeyBytes, iv);
 
@@ -133,30 +132,31 @@ const encryptPriKey=function(password){
   ]).toString('base64')
 
   // create hash- similar to mac 
-  hash = crypto.createHash('sha1')
+  mac = crypto.createHash('sha256')
                 .update(derivedKeyBytes)
                 .update(cipherText)
                 .digest('hex');
 
   
-  console.log("hash", hash)
+  console.log("mac", mac)
   console.log('ciphertext', cipherText);
   const saltHex=salt.toString('hex');
 
-  return {tronAddress, saltHex, iv, cipherText, hash};
+  return {tronAddress, saltHex, iv, cipherText, mac};
   };
 
 
 
  let decipherTextStr;
 
- const getPrivateKey = function(password, saltHex, iv, cipherText, hash){
+ const decryptPrivateKey = function(password, saltHex, iv, cipherText, mac){
    
   const algorithm = 'aes-128-ctr';
   const iv2 = Buffer.from(iv, 'hex');
+
   const derivedKeyBytes= crypto.pbkdf2Sync(password, salt, 1, 128/8, 'sha256')
 
-  console.log("salt2", saltHex.toString('hex'));
+  console.log("salt2", saltHex);
   console.log("iv2", iv2.toString('hex'));
   console.log('derived key 2', derivedKeyBytes.toString('hex'));
 
@@ -165,26 +165,25 @@ const encryptPriKey=function(password){
     return cipherText;
   }
 
-  let hash2 = crypto.createHash('sha1')
+  let mac2 = crypto.createHash('sha256')
                    .update(derivedKeyBytes)
                    .update(cipherText)
                    .digest('hex');
 
   console.log({
-    hash1: hash,
-    hash2: hash2
+    mac1: mac,
+    mac2: mac2
   })
 
-  if(hash2!=hash){
-    console.log('wrong password');
+  if(mac2!=mac){
+    console.log('WRONG PASSWORD!');
     return;
   }else{
   var decipher = crypto.createDecipheriv(algorithm, derivedKeyBytes, iv2)
   console.log("decipher", decipher.toString('hex'));
 
-  // decipher.setAutoPadding(false);
   const decipherText= Buffer.concat([
-    decipher.update(cipherText, 'base64'), // Expect `text` to be a base64 string
+    decipher.update(cipherText, 'base64'),
     decipher.final()
   ]).toString()
 
@@ -200,5 +199,5 @@ const encryptPriKey=function(password){
 
   module.exports={
       encryptPriKey,
-      getPrivateKey
+      decryptPrivateKey
   }

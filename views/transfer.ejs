@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <title>Tron App</title>
+</head>
+<body>
+  <h1 style="font-family:'Lucida Sans', 'Lucida Sans Regular', sans-serif; margin: 40px;">Transfer Funds </h1>
+<div class="sans-serif w-90 white mw6 center relative cover bg-top mt2"
+style="margin: 20px;">
+    <form class="measure center" action="/transferfunds" method="post">
+
+      <label for="fromAddress" style="color: rgb(153, 0, 255);">From address</label>
+        <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray"
+        style="margin-bottom: 20px;"
+         type="text" 
+         id="fromAddr" 
+         name="fromAddress">
+
+
+         <label for="toAddress" style="color: rgb(153, 0, 255);">To address</label>
+         <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray"
+         style="margin-bottom: 20px;"
+         type="text" 
+         id="toAddr" 
+         name="toAddress">
+
+         <label for="Amount" style="color: rgb(153, 0, 255);">Amount in 'sun'</label>
+         <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray"
+         style="margin-bottom: 20px;"
+         type="text" 
+         id="amount" 
+         name="amount">
+
+
+         <label for="Amount" style="color: rgb(153, 0, 255); padding-top: 20px;">Token</label>
+         <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray" 
+         style="margin-bottom: 20px;"
+         type="text" 
+         id="token" 
+         name="token">
+
+
+        <input 
+        class="ttu bn pv3 ph4 f6 bg-purple white b br-pill pointer grow"
+        style="margin-top: 18px;"
+        type="submit" 
+        value="Transfer amount">
+    </form>
+</div>
+    
+</body>
+</html>

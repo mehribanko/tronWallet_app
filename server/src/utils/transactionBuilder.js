@@ -3,6 +3,7 @@ const { Block, Transaction, Account } = require("../protocol/core/Tron_pb");
 const google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js');
 const { encodeString } = require("../lib/code");
 const { byte2hexStr, byteArray2hexStr } = require("./bytes");
+const syncRequest = require('sync-request');
 
 const {
   TransferContract,
@@ -68,6 +69,29 @@ function buildTransferContract(message, contractType, typeName, permissionId) {
   }
   let raw = new Transaction.raw();
   raw.addContract(contract);
+  
+  
+  let blockHash;
+  let blockBytes;
+  let blockTimestamp;
+  let blockExpiration;
+  const getBlockData = function(){
+    var resData = syncRequest('GET', 'http://3.144.176.65:8090/wallet/getnowblock');
+    let blockDataJSON= JSON.parse(resData.getBody().toString());
+    blockHash=blockDataJSON.transactions[0].raw_data.ref_block_hash
+    blockBytes=blockDataJSON.transactions[0].raw_data.ref_block_bytes
+    blockTimestamp=blockDataJSON.transactions[0].raw_data.timestamp
+    blockExpiration=blockDataJSON.transactions[0].raw_data.expiration
+    return blockHash, blockBytes, blockTimestamp, blockExpiration;
+  }
+  
+  getBlockData();
+
+  raw.setRefBlockHash(fromHexString(blockHash));
+  raw.setRefBlockBytes(fromHexString(blockBytes));
+  raw.setExpiration(blockExpiration);
+  raw.setTimestamp(blockTimestamp);
+
   // raw.setTimestamp(new Date().getTime() * 1000000);
   let transaction = new Transaction();
   transaction.setRawData(raw);

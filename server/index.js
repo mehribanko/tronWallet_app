@@ -5,13 +5,51 @@ const bcrypt=require('bcrypt');
 const session=require('express-session');
 const flash=require('express-flash')
 const cookieParser = require("cookie-parser");
+const bs58 = require('bs58')
+const axios=require('axios');
+const syncRequest = require('sync-request');
 
 const {encryptPriKey,
-        getPrivateKey}=require("./src/genPriKey")
+        decryptPrivateKey}=require("./src/genPriKey");
+
+const decode58Check = require("./src/utils/crypto").decode58Check;
+const { Block, Transaction, Account } = require("./src/protocol/core/Tron_pb");
+const google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js');
+const { encodeString } = require("./src/lib/code");
+const { byte2hexStr, byteArray2hexStr } = require("./src/utils/bytes");
+const {base64DecodeFromString, hexStr2byteArray} = require("./src/lib/code");
+
+
+const {ADDRESS_PREFIX, ADDRESS_PREFIX_BYTE} = require("./src/utils/address");
+const base64EncodeToString = require("./src/lib/code").base64EncodeToString;
+
+const {encode58, decode58} = require("./src/lib/base58");
+const EC = require('elliptic').ec;
+const { keccak256 } = require('js-sha3');
+const jsSHA = require("./src/lib/sha256");
+const ADDRESS_SIZE = require("./src/utils/address").ADDRESS_SIZE;
+
+
+const {
+  TransferContract,
+  TransferAssetContract,
+} = require("./src/protocol/core/Contract_pb");
+const { isBooleanObject } = require('util/types');
+const { Http2ServerRequest } = require('http2');
+const { ppid } = require('process');
+
+const fromHexString = hexString => new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
+const ECKeySign=require("./src/utils/crypto");
+const SHA256=require('./src/utils/crypto');
+const {buildTransferTransaction, buildTransferContract, signTransaction}=require('./src/utils/transactionBuilder')
+
+
 const PORT=process.env.PORT||4000;
 const passport=require('passport');
 
-const initializePassport=require('./passportConfig')
+const initializePassport=require('./passportConfig');
+
 
 initializePassport(passport);
 
@@ -62,6 +100,11 @@ app.get("/users/logout", (req,res, next)=>{
       });
 })
 
+
+app.get("/users/transferfunds", (req,res)=>{
+    res.render('transfer')
+
+})
 
 // app.post("/users/register", async (req,res)=>{
 //     let {email, password, password2}=req.body;
@@ -199,13 +242,14 @@ app.post("/users/login", passport.authenticate("local", {
 
 
 
-app.post('/createaddr', (req,res)=>{
+app.post('/createaddr', async (req,res)=>{
  
    const {password}=req.body;
 
    let user_id = req.session.passport.user;
    let errors=[];
    let tronAddressResult;
+   let TrimmedHexTronAddress;
 
    if(!password){
        errors.push({message: "Please, enter your password."});
@@ -257,12 +301,33 @@ app.post('/createaddr', (req,res)=>{
                             const ivHex=fnc.iv.toString('hex');
                             
                             const queryText = 'insert into addr_data (id, email, password, tronaddr, salt, iv, ciphertext, hash) values ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING tronaddr'
-                            pool.query(queryText, [user.id, user.email, user.password, fnc.tronAddress, fnc.saltHex, ivHex, fnc.cipherText, fnc.hash], (err, results)=>{
+                            pool.query(queryText, [user.id, user.email, user.password, fnc.tronAddress, fnc.saltHex, ivHex, fnc.cipherText, fnc.mac], (err, results)=>{
                                 if(err){
                                     throw err;
                                 }
                                     tronAddressResult =results.rows[0].tronaddr;
-                                
+                                    const ByteTronAddress=bs58.decode(tronAddressResult);
+                                    const hexTronAddress=Buffer.from(ByteTronAddress).toString('hex');
+
+                                    if(hexTronAddress.length>42){
+                                        TrimmedHexTronAddress=hexTronAddress.slice(0, -8);
+                                    }
+                                    console.log('hex address', TrimmedHexTronAddress);
+
+                                    const reqJSON=JSON.stringify({
+                                        owner_address: "4109050848400fbc016ce4755fbdf6886773b88e39",
+                                        account_address: TrimmedHexTronAddress
+                                    })
+
+                                    axios.post('http://3.144.176.65:8090/wallet/createaccount', reqJSON)
+                                    .then(function(response){
+                                      console.log(response.data)
+                                      return response
+                                    })
+                                    .catch(err =>{
+                                      console.log(err);
+                                    })
+
                                     console.log('tron addr 1', tronAddressResult);
                                     req.flash('success_msg',   `${tronAddressResult}`)
                                     res.redirect('/users/mypage');
@@ -329,9 +394,7 @@ app.post('/exportkey', (req,res)=>{
                          }else{ 
                             let userReal=results.rows[0]
 
-
-                            const fnc=getPrivateKey(userReal.password, userReal.salt, userReal.iv, userReal.ciphertext, userReal.hash);
-
+                            const fnc=decryptPrivateKey(userReal.password, userReal.salt, userReal.iv, userReal.ciphertext, userReal.hash);
                             priKey=fnc.decipherTextStr;
                            
                             req.flash('success_msg',   `${priKey}`)
@@ -349,7 +412,88 @@ app.post('/exportkey', (req,res)=>{
     )
 
    
+
+
+app.post('/users/transferfunds', (req,res)=>{
+
+    const {toAddress, fromAddress, amount} =req.body;
+    const token = "TRX";
+    const parsedAmount=parseInt(amount);
+
+    let user_id = req.session.passport.user;
+    let errors=[];
+    let priKey;
+   
+    if(!password){
+        errors.push({message: "Please, enter your password."});
+    }
  
+    if(errors.length>0){
+        res.render('transfer', {errors})
+    }else{
+    pool.query(
+     `select * from addr_data
+     where id=$1`, [user_id], 
+     (err, results)=>{
+         if(err) {throw err;}
+ 
+         // success code
+         let user;
+         if(results.rows.length>0){
+                 user=results.rows[0]
+
+                 const isTrue= bcrypt.compareSync(password, user.password);
+     
+                  if(!isTrue){
+                     errors.push({message: "Password is not correct."})
+                     res.render('transfer', {errors})
+                  }else{
+ 
+                 pool.query(
+                     `select * from addr_data where password=$1`,[user.password],
+                     (err, results)=>{
+                         if(err){
+                             throw err;
+                         }
+                         // success code
+                         if(results.rows.length<0){
+                             errors.push({message: "Please, create TRON address first."})
+                             res.render('transfer', {errors})
+                         }else{ 
+                            let userReal=results.rows[0]
+
+                            const fnc=decryptPrivateKey(userReal.password, userReal.salt, userReal.iv, userReal.ciphertext, userReal.hash);
+                            priKey=fnc.decipherTextStr;
+
+                            let transaction= buildTransferTransaction(token, fromAddress, toAddress, amount);
+                            let signedTransaction = signTransaction(priKey, transaction);
+
+                            console.log("transaction signed", signedTransaction);
+                            
+                            const signedHexTxn=signedTransaction.hex;
+                            
+                            const hexJSON=JSON.stringify({
+                                transaction: signedHexTxn
+                                })
+
+                            axios.post('http://3.144.176.65:8090/wallet/broadcasthex', hexJSON)
+                            .then(function(response){
+                            console.log(response.data)
+                            req.flash('success_msg',  'Transaction Succesfull!')
+                            res.redirect('transfer');
+                            return response
+                            })
+                            .catch(err =>{
+                            console.log(err);
+                            })
+                         }
+                        })
+                      }
+                   }
+                 }
+               )
+            }
+})
 
 
 
