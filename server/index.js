@@ -12,7 +12,7 @@ const syncRequest = require('sync-request');
 const {encryptPriKey,
         decryptPrivateKey}=require("./src/genPriKey");
 
-const decode58Check = require("./src/utils/crypto").decode58Check;
+const {decode58Check, signTransaction} = require("./src/utils/crypto");
 const { Block, Transaction, Account } = require("./src/protocol/core/Tron_pb");
 const google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js');
 const { encodeString } = require("./src/lib/code");
@@ -42,7 +42,7 @@ const fromHexString = hexString => new Uint8Array(hexString.match(/.{1,2}/g).map
 
 const ECKeySign=require("./src/utils/crypto");
 const SHA256=require('./src/utils/crypto');
-const {buildTransferTransaction, buildTransferContract, signTransaction}=require('./src/utils/transactionBuilder')
+const {buildTransferTransaction}=require('./src/utils/transactionBuilder')
 
 
 const PORT=process.env.PORT||4000;
@@ -230,16 +230,12 @@ app.post("/users/register", async (req,res)=>{
 )
 
 
-
-
-
 app.post("/users/login", passport.authenticate("local", {
     successRedirect: "/users/dashboard",
     failureRedirect: "/",
     failureFlash: true
 })
 )
-
 
 
 app.post('/createaddr', async (req,res)=>{
@@ -342,11 +338,6 @@ app.post('/createaddr', async (req,res)=>{
 })
   
 
-
-
-
-
-
 app.post('/exportkey', (req,res)=>{
  
     const {password}=req.body;
@@ -411,12 +402,10 @@ app.post('/exportkey', (req,res)=>{
         }
     )
 
-   
-
 
 app.post('/users/transferfunds', (req,res)=>{
 
-    const {toAddress, fromAddress, amount} =req.body;
+    const {toAddress, fromAddress, amount, password} =req.body;
     const token = "TRX";
     const parsedAmount=parseInt(amount);
 
@@ -466,9 +455,8 @@ app.post('/users/transferfunds', (req,res)=>{
                             priKey=fnc.decipherTextStr;
 
                             let transaction= buildTransferTransaction(token, fromAddress, toAddress, amount);
-                            let signedTransaction = signTransaction(priKey, transaction);
 
-                            console.log("transaction signed", signedTransaction);
+                            let signedTransaction = signTransaction(priKey, transaction);
                             
                             const signedHexTxn=signedTransaction.hex;
                             
@@ -480,11 +468,13 @@ app.post('/users/transferfunds', (req,res)=>{
                             .then(function(response){
                             console.log(response.data)
                             req.flash('success_msg',  'Transaction Succesfull!')
-                            res.redirect('transfer');
+                            res.redirect('/users/transferfunds');
                             return response
                             })
                             .catch(err =>{
                             console.log(err);
+                            errors.push({message: "Transaction failed. Please, make sure you entered the correct password."})
+                            res.redirect('/users/transferfunds');
                             })
                          }
                         })

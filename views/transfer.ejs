@@ -7,12 +7,46 @@
     <link rel="stylesheet" href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"/>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <title>Tron App</title>
+
+    <style>
+
+      body{
+        color: black;
+      }
+
+    </style>
 </head>
 <body>
   <h1 style="font-family:'Lucida Sans', 'Lucida Sans Regular', sans-serif; margin: 40px;">Transfer Funds </h1>
 <div class="sans-serif w-90 white mw6 center relative cover bg-top mt2"
 style="margin: 20px;">
-    <form class="measure center" action="/transferfunds" method="post">
+
+
+<div style="color: red;">
+  <% if(typeof errors != 'undefined') { %>
+      <% errors.forEach(error => { %>
+      <h6><%= error.message %></h6>
+      <% }) %>
+  <% } %>
+</div>
+
+<div style="color: green;">
+        
+  <% if(messages.success_msg){ %>
+
+      <h6> <%= messages.success_msg %> </h6>
+
+   <% } %>
+
+   <% if(messages.error){ %>
+
+      <h6> <%= messages.error %> </h6>
+
+   <% } %>
+
+</div>
+
+    <form class="measure center" action="/users/transferfunds" method="post">
 
       <label for="fromAddress" style="color: rgb(153, 0, 255);">From address</label>
         <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray"
@@ -43,6 +77,14 @@ style="margin: 20px;">
          type="text" 
          id="token" 
          name="token">
+
+
+         <label for="Amount" style="color: rgb(153, 0, 255); padding-top: 20px;">Password</label>
+         <input class="input-reset w-100 mw-100 bn br1 pa2 bg-light-gray" 
+         style="margin-bottom: 20px;"
+         type="password" 
+         id="password" 
+         name="password">
 
 
         <input 

@@ -78,6 +78,7 @@ function buildTransferContract(message, contractType, typeName, permissionId) {
   const getBlockData = function(){
     var resData = syncRequest('GET', 'http://3.144.176.65:8090/wallet/getnowblock');
     let blockDataJSON= JSON.parse(resData.getBody().toString());
+
     blockHash=blockDataJSON.transactions[0].raw_data.ref_block_hash
     blockBytes=blockDataJSON.transactions[0].raw_data.ref_block_bytes
     blockTimestamp=blockDataJSON.transactions[0].raw_data.timestamp
@@ -102,7 +103,7 @@ function buildTransferContract(message, contractType, typeName, permissionId) {
 
 function buildTransferTransaction(token, from, to, amount) {
 
-  if (token === '_') {
+  if (token === 'TRX') {
 
     let transferContract = new TransferContract();
     transferContract.setToAddress(Uint8Array.from(decode58Check(to)));

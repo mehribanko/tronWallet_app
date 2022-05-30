@@ -96,6 +96,7 @@ let iv;
 let cipherText;
 let tronAddress;
 let mac;
+let saltHex;
 
 const encryptPriKey=function(password){
   const algorithm = 'aes-128-ctr';
@@ -140,7 +141,7 @@ const encryptPriKey=function(password){
   
   console.log("mac", mac)
   console.log('ciphertext', cipherText);
-  const saltHex=salt.toString('hex');
+  saltHex=salt.toString('hex');
 
   return {tronAddress, saltHex, iv, cipherText, mac};
   };
@@ -153,8 +154,9 @@ const encryptPriKey=function(password){
    
   const algorithm = 'aes-128-ctr';
   const iv2 = Buffer.from(iv, 'hex');
+  const salt2=Buffer.from(saltHex, 'hex');
 
-  const derivedKeyBytes= crypto.pbkdf2Sync(password, salt, 1, 128/8, 'sha256')
+  const derivedKeyBytes= crypto.pbkdf2Sync(password, salt2, 1, 128/8, 'sha256')
 
   console.log("salt2", saltHex);
   console.log("iv2", iv2.toString('hex'));
@@ -164,6 +166,7 @@ const encryptPriKey=function(password){
   if (cipherText === null || typeof cipherText === 'undefined' || cipherText === '') {
     return cipherText;
   }
+
 
   let mac2 = crypto.createHash('sha256')
                    .update(derivedKeyBytes)
