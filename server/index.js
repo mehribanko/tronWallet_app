@@ -467,13 +467,13 @@ app.post('/users/transferfunds', (req,res)=>{
                             axios.post('http://3.144.176.65:8090/wallet/broadcasthex', hexJSON)
                             .then(function(response){
                             console.log(response.data)
-                            req.flash('success_msg',  'Transaction Succesfull!')
+                            req.flash('success_msg',  'Transaction Successful!')
                             res.redirect('/users/transferfunds');
                             return response
                             })
                             .catch(err =>{
                             console.log(err);
-                            errors.push({message: "Transaction failed. Please, make sure you entered the correct password."})
+                            errors.push({message: "Transaction failed. Please, make sure your password is correct."})
                             res.redirect('/users/transferfunds');
                             })
                          }
